@@ -1,8 +1,10 @@
-# Arther — 2026 TextSum Competition
+# thai-textsum-rag-2026
 
 > **Query-based Thai Meeting-Minutes Summarization with Evidence Retrieval**
-> RAG + LLM pipeline submitted to the 2026 TextSum competition (Thai Parliament meeting minutes).
+> RAG + LLM pipeline submitted to the **2026 TextSum** competition (Thai Parliament meeting minutes).
 > Best score so far: **0.678** (SFT v1, Qwen3-32B-SFT-AWQ).
+>
+> Stack: BGE-M3 retriever → bge-reranker-v2-m3 → Qwen3 (LoRA SFT/DPO) → AWQ INT4 → vLLM 0.8.5 on H100.
 
 ---
 
@@ -130,55 +132,118 @@ A 1239-query analysis of the train set surfaced the failure modes driving the 0.
 
 ## Repository Layout
 
+The tree is grouped by *role*, not chronology. The final inference path lives in **`inference/`**, all the LoRA training experiments in **`training/`**, AWQ quantisers in **`quantization/`**, container recipes in **`docker/`**, and the Lanta orchestration scripts in **`scripts/`**.
+
 ```
-Arther/
-├── README.md                         ← you are here
-├── RECAP.md                          ← raw competition notes
-├── STATUS.md                         ← raw status log
+.
+├── README.md
+├── requirements.txt
+├── .gitignore
 │
-├── Dockerfile.14b_awq                ← final image recipe (14B AWQ + parser fix)
-├── Dockerfile.32b                    ← 32B baseline image
-├── Dockerfile.32b_sft_v2 / v3        ← SFT-v2 / v3 variants
-├── Dockerfile.32b_refboost{,_v3,_v4} ← refboost speed-tune attempts
-├── Dockerfile.35b                    ← Qwen3.6-35B-A3B-FP8 image
-├── docker-compose.yml                ← local smoke-test harness
-├── entrypoint.sh / entrypoint_35b.sh ← CUDA path bootstrap for vLLM
-├── requirements.txt                  ← runtime python deps
+├── docs/                               ← project narrative
+│   ├── RECAP.md                            • day-by-day competition log
+│   └── STATUS.md                           • raw status snapshots
 │
-├── run_vllm_14b_awq.py               ← FINAL inference script (parser + speed)
-├── run_vllm_32b.py                   ← prior best (32B AWQ, score 0.678)
-├── run_vllm_32b_refboost*.py         ← reranker-heavy variants (all timed out)
-├── run_vllm_35b.py                   ← 35B FP8 MoE variant
-├── run_vllm_32b_thinking.py          ← chain-of-thought ablation
-├── run_vllm_32b_twostage.py          ← retrieve→answer→re-retrieve ablation
-├── run_vllm_32b_hybrid.py            ← dense + sparse hybrid
-├── run_vllm_32b_bestofn.py           ← best-of-N sampling
+├── inference/                          ← runtime / submission code
+│   ├── run_vllm_14b_awq.py                 ★ FINAL — 14B AWQ + 3-stage JSON parser
+│   ├── run_vllm_32b.py                     • prior best (0.678, 32B-SFT-AWQ)
+│   ├── run_vllm_35b.py                     • Qwen3.6-35B-A3B-FP8 variant
+│   ├── run_vllm.py                         • original 14B BF16 path
+│   ├── run.py                              • thin /model/run.py CMD shim
+│   ├── run_vllm_32b_bestofn.py             • best-of-N sampling ablation
+│   ├── run_vllm_32b_hybrid.py              • dense + sparse hybrid retrieval
+│   ├── run_vllm_32b_thinking.py            • chain-of-thought ablation
+│   ├── run_vllm_32b_twostage.py            • retrieve → answer → re-retrieve
+│   ├── run_vllm_32b_refboost.py            • reranker-heavy (timed out)
+│   ├── run_vllm_32b_refboost_v3.py         • minimal-diff retry (timed out)
+│   ├── run_vllm_32b_refboost_v4.py         • speed-tuned retry (timed out)
+│   ├── entrypoint.sh                       • 14B CUDA bootstrap
+│   ├── entrypoint_v2.sh                    • 32B variant
+│   └── entrypoint_35b.sh                   • 35B / CUDA 13 path
 │
-├── train_sft.py                      ← 14B SFT (LoRA)
-├── train_sft_32b.py / v2 / v3        ← 32B SFT iterations
-├── train_sft_v4_oracle.py            ← Oracle-style SFT (use gold refs as input)
-├── train_sft_v5.py                   ← final 14B SFT data
-├── train_dpo*.py                     ← DPO experiments (preferred vs rejected pairs)
-├── gen_dpo_rejected*.py              ← rejected-sample synthesiser
-├── gen_paraphrases_v3.py             ← paraphrase augmentation
+├── training/                           ← LoRA fine-tunes
+│   ├── sft/                                supervised fine-tuning
+│   │   ├── train_sft.py                    • 14B baseline
+│   │   ├── train_sft_v5.py                 ★ final 14B SFT
+│   │   ├── train_sft_v4_oracle.py          • Oracle-style (gold refs as input)
+│   │   ├── train_sft_32b.py / _v2 / _v3    • 32B iterations
+│   │   └── train_sft_32b_oracle.py         • 32B Oracle
+│   ├── dpo/                                direct preference optimisation
+│   │   ├── train_dpo.py                    • 14B DPO
+│   │   ├── train_dpo_32b.py / _v2          • 32B DPO
+│   │   └── gen_dpo_rejected{,_v2}.py       • rejected-sample synth
+│   ├── augmentation/
+│   │   └── gen_paraphrases_v3.py           • paraphrase data aug
+│   └── merge_lora/                         LoRA → full-weights merge utilities
+│       ├── merge_lora{,_v4,_v5}.py             — 14B
+│       ├── merge_lora_32b{,_v2,_v3,_oracle}.py — 32B
+│       └── merge_lora_dpo{,_32b,_32b_v2}.py    — DPO heads
 │
-├── merge_lora*.py                    ← LoRA-merge utilities (per checkpoint)
-├── quantize_*_awq.py                 ← AWQ INT4 quantisation drivers
+├── quantization/                       ← AWQ INT4 drivers (autoawq + GEMM)
+│   ├── quantize_14b_v5_awq.py              ★ final 14B AWQ
+│   ├── quantize_32b_awq.py / _v2 / _v3     • 32B AWQ iterations
+│   ├── quantize_32b_oracle_awq.py
+│   └── quantize_dpo_32b{,_v2}_awq.py
 │
-├── eval_train.py / eval_hf.py        ← offline eval mirroring the org's scorer
-├── eval_vllm.py                      ← vLLM-side eval
-├── inference*.py                     ← legacy HF inference paths
+├── evaluation/                         ← offline scoring & ablations
+│   ├── eval_train.py                       • mirrors the org's eval.py on train set
+│   ├── eval_hf.py                          • HuggingFace-side eval
+│   ├── eval_vllm.py                        • vLLM-side eval
+│   ├── inference.py                        • legacy HF inference
+│   ├── inference_train.py                  • HF inference on train split
+│   ├── inference_moe.py                    • 35B-MoE inference
+│   ├── inference_moe_train.py              • 35B-MoE on train
+│   ├── infer_train.py                      • thin wrapper
+│   ├── test_pipeline.py                    • end-to-end smoke test
+│   └── test_fp8_quick.py                   • FP8 sanity check
 │
-├── lanta_build_push_*.sh             ← rootless podman build+push for each image
-├── script_*.sh                       ← SLURM batch wrappers
-├── start_*.sh                        ← chained-job launchers
-├── swait.sh                          ← squeue watcher utility
+├── docker/                             ← container recipes
+│   ├── Dockerfile.14b_awq                  ★ FINAL submission image
+│   ├── Dockerfile                          • original 14B
+│   ├── Dockerfile.9b / .9b_v2              • Qwen3.5-9B trials
+│   ├── Dockerfile.32b                      • 32B baseline
+│   ├── Dockerfile.32b_sft_v2 / _sft_v3     • SFT iterations
+│   ├── Dockerfile.32b_dpo / _dpo_v2        • DPO iterations
+│   ├── Dockerfile.32b_oracle               • Oracle SFT
+│   ├── Dockerfile.32b_refboost{,_v3,_v4}   • reranker-heavy variants
+│   ├── Dockerfile.32b_bestofn / _thinking / _twostage / _hybrid
+│   ├── Dockerfile.35b / .35b.test          • Qwen3.6-35B-A3B
+│   ├── Dockerfile.fp8                      • FP8 quantised
+│   ├── Dockerfile.dpo                      • 14B DPO
+│   ├── Dockerfile.oracle_v4 / _v4_p2       • Oracle v4 multi-stage
+│   ├── Dockerfile.sft_v5                   • 14B SFT-v5 (BF16)
+│   ├── docker-compose.yml                  • local smoke-test harness
+│   └── dockerignore/                       per-image build-context filters
+│       ├── dockerignore                        (rename of .dockerignore — GitHub
+│       └── dockerignore.<variant>               hides dotfiles in the tree view)
 │
-├── .dockerignore.*                   ← per-image build-context exclusions
-└── data/evaluate_sample/             ← official scorer (eval.py) + sample CSV
+├── scripts/                            ← orchestration
+│   ├── build/                              rootless podman build+push (Lanta)
+│   │   └── lanta_build_push_*.sh           • one per image variant
+│   └── slurm/                              SLURM batch wrappers
+│       ├── script_train_*.sh               • LoRA training jobs
+│       ├── script_eval_*.sh                • eval jobs
+│       ├── script_quantize_*.sh            • AWQ jobs
+│       ├── script_dpo*.sh                  • DPO jobs
+│       ├── script_build_push.sh            • image build job
+│       ├── script_podman_build.sh          • podman variant
+│       ├── script_moe_eval.sh              • 35B MoE eval
+│       ├── start_*.sh                      • chained-job launchers
+│       ├── swait.sh                        • squeue watcher utility
+│       ├── download_qwen35_9b.sh           • model fetch helper
+│       └── rebuild_oracle_after_35b.sh     • cascade rebuild script
+│
+└── data/
+    └── evaluate_sample/                ← official competition scorer
+        ├── eval.py                         • bge-m3 + ROUGE + IoU implementation
+        ├── requirements.txt
+        └── submission.csv                  • format example
 ```
 
-> Large artefacts (model checkpoints, LoRA outputs, raw build logs, the > 800-MB train set zip) are **not** committed — they live on the Lanta Lustre scratch and the AI-Singapore registry.
+**Legend.**
+- ★ = file you actually want to read first.
+- Large artefacts (model checkpoints, LoRA outputs, raw build logs, the > 800-MB train-set zip) are **not** committed — they live on the Lanta Lustre scratch and in the AI-Singapore registry.
+- The hardcoded paths inside the bash scripts assume the original flat layout on Lanta; this repo's directory structure is reorganised for *readability*. Adjust working directories if you re-run the scripts from this layout.
 
 ---
 
@@ -192,7 +257,7 @@ The repo assumes you have:
 ### 1. Quantise the LoRA-merged model
 
 ```bash
-sbatch script_quantize_14b_v5.sh
+sbatch scripts/slurm/script_quantize_14b_v5.sh
 # → produces ./Qwen3-14B-SFT-v5-AWQ/ (~9.3 GB)
 ```
 
@@ -200,20 +265,21 @@ sbatch script_quantize_14b_v5.sh
 
 ```bash
 # Storage on /dev/shm (126 GB tmpfs) — /tmp is far too small for 40 GB images.
-nohup bash lanta_build_push_14b_awq.sh > build_14b_awq.log 2>&1 &
+nohup bash scripts/build/lanta_build_push_14b_awq.sh > build_14b_awq.log 2>&1 &
 tail -f build_14b_awq.log
 ```
 
 The script:
 1. Cleans any leftover `podman-root-*` directories on `/dev/shm`.
-2. Builds `textsum-14b-awq:v1` from `Dockerfile.14b_awq`.
+2. Builds `textsum-14b-awq:v1` from `docker/Dockerfile.14b_awq`.
 3. Logs in to `registry.ai.in.th` and pushes (with up to 5 retries) the tag
    `registry.ai.in.th/2026-textsum/48f0b4ab/watin-promfiy.tme5:AI-Benchmark-Programs-2026-14b-awq-v1`.
 
 ### 3. Smoke-test locally before submission
 
 ```bash
-docker compose up   # uses docker-compose.yml; mounts ./test_data and ./result
+docker compose -f docker/docker-compose.yml up
+# mounts ./test_data and ./result
 ```
 
 ### 4. Submit
