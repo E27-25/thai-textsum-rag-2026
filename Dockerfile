@@ -1,0 +1,25 @@
+FROM docker.io/python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /model
+
+RUN echo 'APT::Sandbox::User "root";' > /etc/apt/apt.conf.d/99sandbox \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 libnuma1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt requirements.txt
+RUN pip3 install --no-cache-dir "vllm==0.8.5" "transformers>=4.51.1,<5"
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+COPY entrypoint.sh /model/entrypoint.sh
+RUN chmod +x /model/entrypoint.sh
+
+COPY run_vllm.py run.py
+COPY bge-m3/ ./bge-m3/
+COPY bge-reranker-v2-m3/ ./bge-reranker-v2-m3/
+
+COPY Qwen3-14B-SFT-v3/ ./Qwen3-14B-SFT-v3/
+
+CMD ["/model/entrypoint.sh"]

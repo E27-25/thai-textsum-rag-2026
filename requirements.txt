@@ -1,0 +1,7 @@
+pythainlp
+rouge-score
+tqdm
+pandas
+accelerate
+safetensors
+FlagEmbedding

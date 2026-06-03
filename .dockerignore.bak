@@ -1,0 +1,13 @@
+env/
+Qwen3.6-35B-A3B-FP8/
+Qwen3-32B/
+Qwen3.6-27B/
+Qwen3.6-35B-A3B/
+*.out
+*.csv
+__pycache__/
+.git/
+inference_train.py
+eval_train.py
+script*.sh
+swait.sh

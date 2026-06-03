@@ -1,0 +1,37 @@
+FROM docker.io/python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1
+ENV LLM_PATH=/model/Qwen3.5-9B
+
+WORKDIR /model
+
+COPY requirements.txt requirements.txt
+RUN pip3 install --no-cache-dir \
+    torch --index-url https://download.pytorch.org/whl/cu128
+RUN pip3 install --no-cache-dir "vllm==0.8.5" "transformers>=4.51.1,<5"
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+COPY entrypoint.sh /model/entrypoint.sh
+RUN chmod +x /model/entrypoint.sh
+
+COPY run_vllm.py run.py
+COPY bge-m3/ ./bge-m3/
+
+COPY Qwen3.5-9B/config.json \
+     Qwen3.5-9B/model.safetensors.index.json \
+     Qwen3.5-9B/tokenizer_config.json \
+     Qwen3.5-9B/tokenizer.json \
+     Qwen3.5-9B/vocab.json \
+     Qwen3.5-9B/merges.txt \
+     Qwen3.5-9B/chat_template.jinja \
+     Qwen3.5-9B/preprocessor_config.json \
+     Qwen3.5-9B/video_preprocessor_config.json \
+     Qwen3.5-9B/LICENSE \
+     ./Qwen3.5-9B/
+
+COPY Qwen3.5-9B/model.safetensors-00001-of-00004.safetensors ./Qwen3.5-9B/
+COPY Qwen3.5-9B/model.safetensors-00002-of-00004.safetensors ./Qwen3.5-9B/
+COPY Qwen3.5-9B/model.safetensors-00003-of-00004.safetensors ./Qwen3.5-9B/
+COPY Qwen3.5-9B/model.safetensors-00004-of-00004.safetensors ./Qwen3.5-9B/
+
+CMD ["/model/entrypoint.sh"]

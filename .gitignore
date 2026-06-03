@@ -1,0 +1,45 @@
+# Large artefacts that should never be committed
+*.log
+*.out
+*.tar
+*.tar.gz
+*.zip
+*.bin
+*.safetensors
+*.pt
+*.pth
+
+# Local data (the competition forbids redistribution)
+data/2026-textsum_public_dataset-zip.zip
+data/2026-textsum_evaluation_script_public_eval_script-zip.zip
+data/ชุดข้อมูล/
+
+# Model checkpoints
+Qwen3-*/
+bge-m3/
+bge-reranker-v2-m3/
+lora_output*/
+
+# Podman scratch
+podman-root*/
+podman-run*/
+podman-tmp*/
+libpod/
+
+# Per-build dumps
+*.csv
+*.json
+dpo_pairs_*.json
+
+# Python
+__pycache__/
+*.pyc
+env/
+venv/
+.venv/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+.DS_Store

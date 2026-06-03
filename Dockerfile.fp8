@@ -1,0 +1,79 @@
+FROM docker.io/python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1
+ENV LLM_PATH=/model/Qwen3.6-35B-A3B-FP8
+
+WORKDIR /model
+
+COPY requirements.txt requirements.txt
+RUN pip3 install --no-cache-dir \
+    torch --index-url https://download.pytorch.org/whl/cu128
+RUN pip3 install --no-cache-dir "vllm==0.8.5" "transformers>=4.51.1,<5"
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+COPY entrypoint.sh /model/entrypoint.sh
+RUN chmod +x /model/entrypoint.sh
+
+COPY run_vllm.py run.py
+COPY bge-m3/ ./bge-m3/
+
+COPY Qwen3.6-35B-A3B-FP8/config.json \
+     Qwen3.6-35B-A3B-FP8/generation_config.json \
+     Qwen3.6-35B-A3B-FP8/configuration.json \
+     Qwen3.6-35B-A3B-FP8/tokenizer_config.json \
+     Qwen3.6-35B-A3B-FP8/tokenizer.json \
+     Qwen3.6-35B-A3B-FP8/vocab.json \
+     Qwen3.6-35B-A3B-FP8/merges.txt \
+     Qwen3.6-35B-A3B-FP8/chat_template.jinja \
+     Qwen3.6-35B-A3B-FP8/preprocessor_config.json \
+     Qwen3.6-35B-A3B-FP8/video_preprocessor_config.json \
+     Qwen3.6-35B-A3B-FP8/LICENSE \
+     ./Qwen3.6-35B-A3B-FP8/
+
+COPY Qwen3.6-35B-A3B-FP8/layers-0.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-1.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-2.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-3.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-4.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-5.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-6.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-7.safetensors \
+     ./Qwen3.6-35B-A3B-FP8/
+COPY Qwen3.6-35B-A3B-FP8/layers-8.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-9.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-10.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-11.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-12.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-13.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-14.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-15.safetensors \
+     ./Qwen3.6-35B-A3B-FP8/
+COPY Qwen3.6-35B-A3B-FP8/layers-16.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-17.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-18.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-19.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-20.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-21.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-22.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-23.safetensors \
+     ./Qwen3.6-35B-A3B-FP8/
+COPY Qwen3.6-35B-A3B-FP8/layers-24.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-25.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-26.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-27.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-28.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-29.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-30.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-31.safetensors \
+     ./Qwen3.6-35B-A3B-FP8/
+COPY Qwen3.6-35B-A3B-FP8/layers-32.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-33.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-34.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-35.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-36.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-37.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-38.safetensors \
+     Qwen3.6-35B-A3B-FP8/layers-39.safetensors \
+     ./Qwen3.6-35B-A3B-FP8/
+
+CMD ["/model/entrypoint.sh"]

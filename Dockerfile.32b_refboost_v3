@@ -1,0 +1,26 @@
+FROM docker.io/python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1
+ENV LLM_PATH=/model/Qwen3-32B-SFT-v1-AWQ
+
+WORKDIR /model
+
+RUN echo 'APT::Sandbox::User "root";' > /etc/apt/apt.conf.d/99sandbox \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 libnuma1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt requirements.txt
+RUN pip3 install --no-cache-dir "vllm==0.8.5" "transformers>=4.51.1,<5"
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+COPY entrypoint.sh /model/entrypoint.sh
+RUN chmod +x /model/entrypoint.sh
+
+COPY run_vllm_32b_refboost_v3.py run.py
+COPY bge-m3/ ./bge-m3/
+COPY bge-reranker-v2-m3/ ./bge-reranker-v2-m3/
+
+COPY Qwen3-32B-SFT-v1-AWQ/ ./Qwen3-32B-SFT-v1-AWQ/
+
+CMD ["/model/entrypoint.sh"]

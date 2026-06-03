@@ -1,0 +1,8 @@
+services:
+  inference:
+    image: registry.ai.in.th/2026-textsum/48f0b4ab/watin promfiy.tme5:AI-Benchmark-Programs-2026
+    working_dir: /model
+    volumes:
+      - ./test_data:/model/test:ro
+      - ./result:/result:rw
+      - ./benchmark_lib:/benchmark_lib:ro
