@@ -2,9 +2,12 @@
 
 > **Query-based Thai Meeting-Minutes Summarization with Evidence Retrieval**
 > RAG + LLM pipeline submitted to the **2026 TextSum** competition (Thai Parliament meeting minutes).
-> Best score so far: **0.678** (SFT v1, Qwen3-32B-SFT-AWQ).
+>
+> **Final best score: 0.678** (Qwen3-32B-SFT-v1-AWQ + thinking mode) — submitted 2026-06-03.
 >
 > Stack: BGE-M3 retriever → bge-reranker-v2-m3 → Qwen3 (LoRA SFT/DPO) → AWQ INT4 → vLLM 0.8.5 on H100.
+
+> ⚠️ **Deadline closed 2026-06-05.** Final submission (`32b-thinking-v2`) crashed with `Exit Status 1` and admin never returned the traceback in time to debug. Best run remains `32b-thinking-v1` at 0.678. See [`docs/FINAL_STATUS.md`](docs/FINAL_STATUS.md) for the full post-mortem.
 
 ---
 
