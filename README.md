@@ -7,7 +7,7 @@
 >
 > Stack: BGE-M3 retriever → bge-reranker-v2-m3 → Qwen3 (LoRA SFT/DPO) → AWQ INT4 → vLLM 0.8.5 on H100.
 
-> ⚠️ **Deadline closed 2026-06-05.** Final submission (`32b-thinking-v2`) crashed with `Exit Status 1` and admin never returned the traceback in time to debug. Best run remains `32b-thinking-v1` at 0.678. See [`docs/FINAL_STATUS.md`](docs/FINAL_STATUS.md) for the full post-mortem.
+> ⚠️ **Deadline closed 2026-06-05.** Final submission (`32b-thinking-v2`) crashed with `Exit Status 1` and admin never returned the traceback in time to debug. Best run remains `32b-thinking-v1` at 0.678. See [`docs/FINAL_STATUS.md`](docs/FINAL_STATUS.md) for the post-mortem and [`docs/SCOREBOARD.md`](docs/SCOREBOARD.md) for the full submission table.
 
 ---
 
